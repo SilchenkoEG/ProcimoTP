@@ -1,9 +1,8 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Clock } from '../common/clock.js';
-import { AppException, ErrorCode } from '../common/errors/app.exception.js';
-import { FACILITY_TIMEZONE, isValidDate } from '../common/facility-time.js';
+import { FACILITY_TIMEZONE } from '../common/facility-time.js';
 import { toCourtResponse } from '../courts/court.dto.js';
 import { CourtsService } from '../courts/courts.service.js';
 import { Booking, BookingStatus } from './booking.entity.js';
@@ -35,14 +34,6 @@ export class AvailabilityService {
    * This is a read for the UI — the booking itself is protected by the DB constraint.
    */
   async forDay(courtId: string, date: string): Promise<AvailabilityResponse> {
-    if (!isValidDate(date)) {
-      throw new AppException(
-        HttpStatus.BAD_REQUEST,
-        ErrorCode.ValidationFailed,
-        'Request validation failed',
-        { date: ['date must be a valid calendar date in YYYY-MM-DD format'] },
-      );
-    }
     const court = toCourtResponse(await this.courts.getActive(courtId));
     const slots = buildDaySlots(date, court.opensAt, court.closesAt);
     if (slots.length === 0) return { ...this.header(court, date), slots: [] };
