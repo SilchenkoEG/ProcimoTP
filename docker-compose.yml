@@ -18,5 +18,25 @@ services:
       timeout: 3s
       retries: 20
 
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://courtly:courtly@db:5432/courtly
+      # Demo value so `docker compose up` needs no setup. Set a real secret in any real deployment.
+      JWT_SECRET: courtly-demo-secret-change-me
+      PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Not published on the host: the browser reaches it through the web container's /api proxy.
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
 volumes:
   pgdata:
