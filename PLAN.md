@@ -14,7 +14,8 @@ Full brief: `REQUIREMENTS.md` (kept locally, not committed).
 | Data access | TypeORM (`@nestjs/typeorm`), constraint as raw SQL in migration | Prisma (awkward with Nest DI), raw `pg` |
 | Validation / auth | class-validator DTOs, `@nestjs/jwt` + bcryptjs (no Passport) | zod, Passport (unneeded for seeded login) |
 | Time | dayjs + tz, facility zone `Europe/Lisbon`, store `timestamptz` | — |
-| Tests | Jest + supertest against real Postgres | mocks-only (can't prove concurrency) |
+| Tests | Vitest + supertest against real Postgres (Vitest = NestJS 12 default; Nest 12 is ESM-only, so imports end in `.js`) | Jest (no longer Nest's default, ESM friction), mocks-only (can't prove concurrency) |
+| npm registry | per-package `.npmrc` → `registry.npmjs.org` | inheriting the global (private work) registry → private URLs in a public lockfile, reviewers can't install |
 | Docker | `db` + `api` (migrate → seed → start) + `web` (nginx, proxies `/api`) | separate migrate container, CORS setup |
 | Schema vs data | migrations = schema only, seed = idempotent demo data relative to today | admin/courts inside migrations |
 | IDs | uuid | serial ints (guessable) |

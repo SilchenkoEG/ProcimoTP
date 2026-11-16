@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 coverage/
+*.tsbuildinfo
 
 # env files (compose has defaults; never commit real secrets)
 .env
