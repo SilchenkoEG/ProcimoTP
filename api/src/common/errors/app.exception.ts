@@ -8,6 +8,10 @@ export const ErrorCode = {
   Forbidden: 'FORBIDDEN',
   NotFound: 'NOT_FOUND',
   InternalError: 'INTERNAL_ERROR',
+  // courts
+  CourtNotFound: 'COURT_NOT_FOUND',
+  CourtNameTaken: 'COURT_NAME_TAKEN',
+  CourtHasUpcomingBookings: 'COURT_HAS_UPCOMING_BOOKINGS',
 } as const;
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
