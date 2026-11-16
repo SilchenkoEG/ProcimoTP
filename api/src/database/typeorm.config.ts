@@ -1,4 +1,4 @@
-import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import type { DataSourceOptions } from 'typeorm';
 import { Booking } from '../bookings/booking.entity.js';
 import { Court } from '../courts/court.entity.js';
 import { User } from '../users/user.entity.js';
@@ -8,7 +8,8 @@ import { InitialSchema1794835933000 } from './migrations/1794835933000-InitialSc
 // Inside docker compose the api gets DATABASE_URL pointing at `db:5432` instead.
 export const DEFAULT_DATABASE_URL = 'postgres://courtly:courtly@localhost:5433/courtly';
 
-export function buildTypeOrmOptions(databaseUrl: string): TypeOrmModuleOptions {
+// Shared by the Nest app and the standalone seed script.
+export function buildDataSourceOptions(databaseUrl: string): DataSourceOptions {
   return {
     type: 'postgres',
     url: databaseUrl,

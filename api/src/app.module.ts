@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { buildTypeOrmOptions, DEFAULT_DATABASE_URL } from './database/typeorm.config.js';
+import { buildDataSourceOptions, DEFAULT_DATABASE_URL } from './database/typeorm.config.js';
 import { HealthController } from './health/health.controller.js';
 
 @Module({
@@ -10,7 +10,7 @@ import { HealthController } from './health/health.controller.js';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
-        buildTypeOrmOptions(config.get<string>('DATABASE_URL') ?? DEFAULT_DATABASE_URL),
+        buildDataSourceOptions(config.get<string>('DATABASE_URL') ?? DEFAULT_DATABASE_URL),
     }),
   ],
   controllers: [HealthController],
