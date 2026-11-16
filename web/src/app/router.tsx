@@ -1,6 +1,9 @@
 import { Typography } from '@mui/material';
 import { createBrowserRouter } from 'react-router';
 import { LoginPage } from '../features/auth/LoginPage';
+import { CourtAvailabilityPage } from '../features/bookings/CourtAvailabilityPage';
+import { MyBookingsPage } from '../features/bookings/MyBookingsPage';
+import { CourtsPage } from '../features/courts/CourtsPage';
 import { AppLayout } from './AppLayout';
 import { HomeRedirect, RequireAuth } from './RequireAuth';
 
@@ -19,8 +22,9 @@ export const router = createBrowserRouter([
           {
             element: <RequireAuth role="user" />,
             children: [
-              { path: '/courts', element: <Soon title="Courts" /> },
-              { path: '/bookings', element: <Soon title="My bookings" /> },
+              { path: '/courts', element: <CourtsPage /> },
+              { path: '/courts/:courtId', element: <CourtAvailabilityPage /> },
+              { path: '/bookings', element: <MyBookingsPage /> },
             ],
           },
           {
