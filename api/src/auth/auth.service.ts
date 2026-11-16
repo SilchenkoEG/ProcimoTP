@@ -4,8 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { AppException, ErrorCode } from '../common/errors/app.exception.js';
+import { isPgError, PG_UNIQUE_VIOLATION } from '../database/pg-errors.js';
 import { User, UserRole } from '../users/user.entity.js';
 import type { AuthUser, JwtPayload } from './auth-user.js';
+import type { RegisterDto } from './register.dto.js';
 
 export interface PublicUser {
   id: string;
@@ -16,7 +18,8 @@ export interface PublicUser {
 
 // Compared against when the email is unknown, so "no such user" and "wrong password"
 // take the same time and can't be told apart (no user enumeration via timing).
-const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
+const BCRYPT_ROUNDS = 10;
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', BCRYPT_ROUNDS);
 
 @Injectable()
 export class AuthService {
@@ -41,6 +44,36 @@ export class AuthService {
       );
     }
 
+    return this.session(user);
+  }
+
+  /**
+   * Create a `user` account and sign it in. The role is fixed here, never taken from the
+   * request (the DTO has no role field, and unknown fields are rejected).
+   * Uniqueness is left to the database (`users_email_key`), so two simultaneous sign-ups
+   * with the same email can't both succeed.
+   */
+  async register(dto: RegisterDto): Promise<{ accessToken: string; user: PublicUser }> {
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    let user: User;
+    try {
+      user = await this.users.save(
+        this.users.create({ email: dto.email, name: dto.name, passwordHash, role: UserRole.User }),
+      );
+    } catch (error) {
+      if (isPgError(error, PG_UNIQUE_VIOLATION, 'users_email_key')) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          ErrorCode.EmailTaken,
+          'An account with this email already exists',
+        );
+      }
+      throw error;
+    }
+    return this.session(user);
+  }
+
+  private async session(user: User): Promise<{ accessToken: string; user: PublicUser }> {
     const payload: JwtPayload = { sub: user.id, role: user.role };
     return { accessToken: await this.jwt.signAsync(payload), user: toPublicUser(user) };
   }

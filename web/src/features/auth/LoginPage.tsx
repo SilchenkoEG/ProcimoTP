@@ -1,6 +1,16 @@
-import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { type FormEvent, useState } from 'react';
-import { Navigate } from 'react-router';
+import { Navigate, Link as RouterLink } from 'react-router';
 import { errorMessage } from '../../api/errors';
 import { useAppDispatch, useAppSelector } from '../../app/store';
 import { useLoginMutation } from './authApi';
@@ -58,7 +68,13 @@ export function LoginPage() {
             </Button>
           </Stack>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
+          <Typography variant="body2" sx={{ mt: 3 }}>
+            No account?{' '}
+            <Link component={RouterLink} to="/register">
+              Create one
+            </Link>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Demo accounts are listed in the README.
           </Typography>
         </CardContent>

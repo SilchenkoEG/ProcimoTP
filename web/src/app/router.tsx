@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { AdminCourtsPage } from '../features/admin/AdminCourtsPage';
 import { AdminDayPage } from '../features/admin/AdminDayPage';
 import { LoginPage } from '../features/auth/LoginPage';
+import { RegisterPage } from '../features/auth/RegisterPage';
 import { CourtAvailabilityPage } from '../features/bookings/CourtAvailabilityPage';
 import { MyBookingsPage } from '../features/bookings/MyBookingsPage';
 import { CourtsPage } from '../features/courts/CourtsPage';
@@ -10,6 +11,7 @@ import { HomeRedirect, RequireAuth } from './RequireAuth';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/register', element: <RegisterPage /> },
   {
     element: <RequireAuth />,
     children: [

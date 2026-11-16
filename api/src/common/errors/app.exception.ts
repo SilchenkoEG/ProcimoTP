@@ -8,6 +8,8 @@ export const ErrorCode = {
   Forbidden: 'FORBIDDEN',
   NotFound: 'NOT_FOUND',
   InternalError: 'INTERNAL_ERROR',
+  // auth
+  EmailTaken: 'EMAIL_TAKEN',
   // courts
   CourtNotFound: 'COURT_NOT_FOUND',
   CourtNameTaken: 'COURT_NAME_TAKEN',
