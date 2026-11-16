@@ -16,6 +16,11 @@ export function errorCode(error: RtkError): string | undefined {
   return apiError(error)?.code;
 }
 
+/** The error's `details` payload, e.g. `{ affectedBookings: 2 }`. */
+export function errorDetails<T>(error: RtkError): T | undefined {
+  return apiError(error)?.details as T | undefined;
+}
+
 /** A message that is safe to show to the user. */
 export function errorMessage(error: RtkError): string {
   const body = apiError(error);
