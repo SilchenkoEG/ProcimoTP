@@ -38,5 +38,14 @@ services:
       retries: 20
       start_period: 10s
 
+  web:
+    build: ./web
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      # The app: http://localhost:8080 (API at http://localhost:8080/api)
+      - "8080:80"
+
 volumes:
   pgdata:
