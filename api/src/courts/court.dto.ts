@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
@@ -11,13 +12,12 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { trim } from '../common/transforms.js';
 import { type Court, Sport } from './court.entity.js';
 
 // Whole hours only ("08:00" … "23:00"): slots are 1 hour, so opening/closing must be on the hour.
 const HOUR = /^([01]\d|2[0-3]):00$/;
 const HOUR_MESSAGE = '$property must be a whole hour in HH:00 format, e.g. 08:00';
-
-const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
 export class CreateCourtDto {
   @Transform(trim)
@@ -41,33 +41,11 @@ export class CreateCourtDto {
   closesAt: string;
 }
 
-/** Every field optional; `isActive: false` deactivates, `isActive: true` reactivates. */
-export class UpdateCourtDto {
-  @IsOptional()
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name?: string;
-
-  @IsOptional()
-  @IsEnum(Sport)
-  sport?: Sport;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(1_000_000)
-  priceCents?: number;
-
-  @IsOptional()
-  @Matches(HOUR, { message: HOUR_MESSAGE })
-  opensAt?: string;
-
-  @IsOptional()
-  @Matches(HOUR, { message: HOUR_MESSAGE })
-  closesAt?: string;
-
+/**
+ * The create fields, all optional (same validators, via PartialType), plus `isActive`:
+ * `false` deactivates, `true` reactivates.
+ */
+export class UpdateCourtDto extends PartialType(CreateCourtDto) {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
@@ -100,9 +78,8 @@ export function toCourtResponse(court: Court): CourtResponse {
     name: court.name,
     sport: court.sport,
     priceCents: court.priceCents,
-    // Postgres returns `time` as "08:00:00"; the API speaks "08:00".
-    opensAt: court.opensAt.slice(0, 5),
-    closesAt: court.closesAt.slice(0, 5),
+    opensAt: court.opensAt,
+    closesAt: court.closesAt,
     isActive: court.isActive,
   };
 }

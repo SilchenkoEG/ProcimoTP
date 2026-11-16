@@ -2,19 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { addDays, FACILITY_TIMEZONE, facilityDateTime } from '../common/facility-time.js';
-import type { Sport } from '../courts/court.entity.js';
-import { Booking, BookingStatus, type CancelledBy } from './booking.entity.js';
+import { type BookingSummary, toBookingSummary } from './booking.dto.js';
+import { Booking, BookingStatus } from './booking.entity.js';
 
-export interface AdminDayBooking {
-  id: string;
-  court: { id: string; name: string; sport: Sport };
+export interface AdminDayBooking extends BookingSummary {
   user: { id: string; name: string; email: string };
-  startsAt: string;
-  endsAt: string;
-  hours: number;
-  priceCents: number;
-  status: BookingStatus;
-  cancelledBy: CancelledBy | null;
 }
 
 export interface AdminDayView {
@@ -59,18 +51,8 @@ export class AdminBookingsService {
   }
 }
 
+/** `b.court` and `b.user` must be loaded. */
 function toAdminDayBooking(b: Booking): AdminDayBooking {
-  const court = b.court!;
   const user = b.user!;
-  return {
-    id: b.id,
-    court: { id: court.id, name: court.name, sport: court.sport },
-    user: { id: user.id, name: user.name, email: user.email },
-    startsAt: b.startsAt.toISOString(),
-    endsAt: b.endsAt.toISOString(),
-    hours: (b.endsAt.getTime() - b.startsAt.getTime()) / 3_600_000,
-    priceCents: b.priceCents,
-    status: b.status,
-    cancelledBy: b.cancelledBy,
-  };
+  return { ...toBookingSummary(b), user: { id: user.id, name: user.name, email: user.email } };
 }

@@ -1,7 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
-
-const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
+import { normalizeEmail, trim } from '../common/transforms.js';
 
 export class RegisterDto {
   @Transform(trim)
@@ -10,10 +9,7 @@ export class RegisterDto {
   @MaxLength(100)
   name: string;
 
-  // Stored lower-case, like at login, so "Alice@X.com" and "alice@x.com" are one account.
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+  @Transform(normalizeEmail)
   @IsEmail()
   @MaxLength(255)
   email: string;

@@ -7,6 +7,7 @@ import { AppException, ErrorCode } from '../common/errors/app.exception.js';
 import { isPgError, PG_UNIQUE_VIOLATION } from '../database/pg-errors.js';
 import { User, UserRole } from '../users/user.entity.js';
 import type { AuthUser, JwtPayload } from './auth-user.js';
+import { BCRYPT_ROUNDS, hashPassword } from './password.js';
 import type { RegisterDto } from './register.dto.js';
 
 export interface PublicUser {
@@ -18,7 +19,6 @@ export interface PublicUser {
 
 // Compared against when the email is unknown, so "no such user" and "wrong password"
 // take the same time and can't be told apart (no user enumeration via timing).
-const BCRYPT_ROUNDS = 10;
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', BCRYPT_ROUNDS);
 
 @Injectable()
@@ -54,7 +54,7 @@ export class AuthService {
    * with the same email can't both succeed.
    */
   async register(dto: RegisterDto): Promise<{ accessToken: string; user: PublicUser }> {
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const passwordHash = await hashPassword(dto.password);
     let user: User;
     try {
       user = await this.users.save(

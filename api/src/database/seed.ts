@@ -3,8 +3,8 @@
 // - Idempotent: if any user exists, it does nothing (safe on every `docker compose up`).
 // - Booking dates are relative to "today" at the facility, so the demo always has
 //   past, today's and upcoming bookings no matter when it is run.
-import bcrypt from 'bcryptjs';
 import { DataSource, type EntityManager } from 'typeorm';
+import { hashPassword } from '../auth/password.js';
 import { Booking, BookingStatus, CancelledBy } from '../bookings/booking.entity.js';
 import { addDays, facilityDateTime, facilityToday } from '../common/facility-time.js';
 import { Court, Sport } from '../courts/court.entity.js';
@@ -117,8 +117,8 @@ export async function seed(manager: EntityManager, now: Date = new Date()): Prom
   if ((await manager.count(User)) > 0) return false;
 
   const [adminHash, userHash] = await Promise.all([
-    bcrypt.hash(SEED_PASSWORDS.admin, 10),
-    bcrypt.hash(SEED_PASSWORDS.user, 10),
+    hashPassword(SEED_PASSWORDS.admin),
+    hashPassword(SEED_PASSWORDS.user),
   ]);
 
   const users = new Map<string, User>();

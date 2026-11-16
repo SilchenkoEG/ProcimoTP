@@ -30,18 +30,23 @@ function flatten(errors: ValidationError[], parent = ''): Record<string, string[
   return out;
 }
 
+/** The API's 400 for invalid input; `details` maps each field to its messages. */
+export function validationError(details: Record<string, string[]>): AppException {
+  return new AppException(
+    HttpStatus.BAD_REQUEST,
+    ErrorCode.ValidationFailed,
+    'Request validation failed',
+    details,
+  );
+}
+
 /** Global DTO validation: unknown fields are rejected, values are converted to DTO types. */
 export function createValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
-    exceptionFactory: (errors) =>
-      new AppException(
-        HttpStatus.BAD_REQUEST,
-        ErrorCode.ValidationFailed,
-        'Request validation failed',
-        flatten(errors), // e.g. { "email": ["email must be an email"] }
-      ),
+    // details, e.g. { "email": ["email must be an email"] }
+    exceptionFactory: (errors) => validationError(flatten(errors)),
   });
 }

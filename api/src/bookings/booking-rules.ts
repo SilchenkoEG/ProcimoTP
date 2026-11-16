@@ -6,7 +6,7 @@ import { toFacilityLocal } from '../common/facility-time.js';
 export const ALLOWED_DURATIONS_HOURS = [1, 2] as const;
 export const CANCELLATION_WINDOW_HOURS = 2;
 
-const HOUR_MS = 60 * 60 * 1000;
+export const HOUR_MS = 60 * 60 * 1000;
 
 export function endOf(startsAt: Date, hours: number): Date {
   return new Date(startsAt.getTime() + hours * HOUR_MS);
@@ -36,8 +36,8 @@ export function isWithinOpeningHours(
   const end = toFacilityLocal(endsAt);
   return (
     start.date === end.date &&
-    start.time >= court.opensAt.slice(0, 5) &&
-    end.time <= court.closesAt.slice(0, 5)
+    start.time >= court.opensAt &&
+    end.time <= court.closesAt
   );
 }
 

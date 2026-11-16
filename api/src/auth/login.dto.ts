@@ -1,11 +1,9 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { normalizeEmail } from '../common/transforms.js';
 
 export class LoginDto {
-  // Emails are stored lower-case; normalise input so "Alice@Courtly.test" works.
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+  @Transform(normalizeEmail)
   @IsEmail()
   email: string;
 

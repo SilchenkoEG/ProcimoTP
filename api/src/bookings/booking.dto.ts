@@ -1,7 +1,7 @@
 import { IsIn, IsISO8601, IsUUID, Matches } from 'class-validator';
 import type { Sport } from '../courts/court.entity.js';
-import { ALLOWED_DURATIONS_HOURS, canCancel } from './booking-rules.js';
-import type { Booking, BookingStatus, CancelledBy } from './booking.entity.js';
+import { ALLOWED_DURATIONS_HOURS, canCancel, HOUR_MS } from './booking-rules.js';
+import { type Booking, BookingStatus, type CancelledBy } from './booking.entity.js';
 
 export class CreateBookingDto {
   @IsUUID()
@@ -20,7 +20,8 @@ export class CreateBookingDto {
   hours: number;
 }
 
-export interface BookingResponse {
+/** The fields every booking response shares (user's own bookings and the admin day view). */
+export interface BookingSummary {
   id: string;
   court: { id: string; name: string; sport: Sport };
   startsAt: string;
@@ -28,25 +29,35 @@ export interface BookingResponse {
   hours: number;
   priceCents: number;
   status: BookingStatus;
-  cancelledAt: string | null;
   cancelledBy: CancelledBy | null;
+}
+
+export interface BookingResponse extends BookingSummary {
+  cancelledAt: string | null;
   /** UI hint only (the API re-checks on cancel): still outside the 2 h window and confirmed. */
   canCancel: boolean;
 }
 
 /** `booking.court` must be loaded. */
-export function toBookingResponse(booking: Booking, now: Date): BookingResponse {
+export function toBookingSummary(booking: Booking): BookingSummary {
   const court = booking.court!;
   return {
     id: booking.id,
     court: { id: court.id, name: court.name, sport: court.sport },
     startsAt: booking.startsAt.toISOString(),
     endsAt: booking.endsAt.toISOString(),
-    hours: (booking.endsAt.getTime() - booking.startsAt.getTime()) / 3_600_000,
+    hours: (booking.endsAt.getTime() - booking.startsAt.getTime()) / HOUR_MS,
     priceCents: booking.priceCents,
     status: booking.status,
-    cancelledAt: booking.cancelledAt?.toISOString() ?? null,
     cancelledBy: booking.cancelledBy,
-    canCancel: booking.status === 'confirmed' && canCancel(booking.startsAt, now),
+  };
+}
+
+/** `booking.court` must be loaded. */
+export function toBookingResponse(booking: Booking, now: Date): BookingResponse {
+  return {
+    ...toBookingSummary(booking),
+    cancelledAt: booking.cancelledAt?.toISOString() ?? null,
+    canCancel: booking.status === BookingStatus.Confirmed && canCancel(booking.startsAt, now),
   };
 }

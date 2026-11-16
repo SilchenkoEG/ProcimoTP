@@ -5,6 +5,7 @@ import { Booking, BookingStatus, CancelledBy } from '../bookings/booking.entity.
 import { Clock } from '../common/clock.js';
 import { AppException, ErrorCode } from '../common/errors/app.exception.js';
 import { FACILITY_TIMEZONE } from '../common/facility-time.js';
+import { validationError } from '../common/validation.js';
 import { isPgError, PG_UNIQUE_VIOLATION } from '../database/pg-errors.js';
 import { Court } from './court.entity.js';
 import type { CreateCourtDto, UpdateCourtDto } from './court.dto.js';
@@ -68,14 +69,13 @@ export class CourtsService {
         // Only fields actually sent count as changes. (A validated DTO instance has every
         // declared property, unsent ones as `undefined`, so it must not be spread blindly.)
         const changes = definedOnly(dto);
-        const opensAt = (changes.opensAt ?? court.opensAt).slice(0, 5);
-        const closesAt = (changes.closesAt ?? court.closesAt).slice(0, 5);
+        const opensAt = changes.opensAt ?? court.opensAt;
+        const closesAt = changes.closesAt ?? court.closesAt;
         assertHoursOrder(opensAt, closesAt);
 
         const affected = await this.findAffectedBookings(manager, court, {
           deactivating: court.isActive && changes.isActive === false,
-          hoursChanged:
-            opensAt !== court.opensAt.slice(0, 5) || closesAt !== court.closesAt.slice(0, 5),
+          hoursChanged: opensAt !== court.opensAt || closesAt !== court.closesAt,
           opensAt,
           closesAt,
         });
@@ -144,19 +144,14 @@ function definedOnly(dto: UpdateCourtDto): Partial<UpdateCourtDto> {
   ) as Partial<UpdateCourtDto>;
 }
 
-function courtNotFound(): AppException {
+export function courtNotFound(): AppException {
   return new AppException(HttpStatus.NOT_FOUND, ErrorCode.CourtNotFound, 'Court not found');
 }
 
 function assertHoursOrder(opensAt: string, closesAt: string): void {
   // "HH:mm" strings compare correctly as text.
   if (closesAt <= opensAt) {
-    throw new AppException(
-      HttpStatus.BAD_REQUEST,
-      ErrorCode.ValidationFailed,
-      'Request validation failed',
-      { closesAt: ['closesAt must be later than opensAt'] },
-    );
+    throw validationError({ closesAt: ['closesAt must be later than opensAt'] });
   }
 }
 

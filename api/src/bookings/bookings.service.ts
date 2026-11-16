@@ -5,6 +5,7 @@ import type { AuthUser } from '../auth/auth-user.js';
 import { Clock } from '../common/clock.js';
 import { AppException, ErrorCode } from '../common/errors/app.exception.js';
 import { Court } from '../courts/court.entity.js';
+import { courtNotFound } from '../courts/courts.service.js';
 import { isPgError, PG_EXCLUSION_VIOLATION } from '../database/pg-errors.js';
 import {
   CANCELLATION_WINDOW_HOURS,
@@ -64,7 +65,7 @@ export class BookingsService {
           lock: { mode: 'pessimistic_read' },
         });
         if (!court) {
-          throw new AppException(HttpStatus.NOT_FOUND, ErrorCode.CourtNotFound, 'Court not found');
+          throw courtNotFound();
         }
         if (!court.isActive) {
           throw new AppException(
@@ -77,7 +78,7 @@ export class BookingsService {
           throw new AppException(
             HttpStatus.UNPROCESSABLE_ENTITY,
             ErrorCode.OutsideOpeningHours,
-            `This court is open ${court.opensAt.slice(0, 5)}–${court.closesAt.slice(0, 5)}`,
+            `This court is open ${court.opensAt}–${court.closesAt}`,
           );
         }
 
