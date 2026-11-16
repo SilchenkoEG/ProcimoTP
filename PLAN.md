@@ -23,6 +23,10 @@ Full brief: `REQUIREMENTS.md` (kept locally, not committed).
 | Seed prices | fixed per sport | random (revenue not reproducible) |
 | Revenue | `bookings.price_cents` snapshot | court price × hours at query time (price edits rewrite history) |
 | Court change hitting upcoming bookings | 409 + confirm dialog → apply & cancel in one transaction | silently allow, plain reject, auto-cancel without asking |
+| Cancel endpoint | `POST /bookings/:id/cancel` (state change, row kept) | `DELETE` (implies removal) |
+| Who books | `user` role only; admin manages courts + sees all bookings | admin also booking (blurs the role split) |
+| Court vs booking race | booking reads court `FOR SHARE`, court edit takes `FOR UPDATE` | no lock (booking could land on a court being deactivated) |
+| `startsAt` input | ISO with explicit offset required | bare local datetime (parsed in server TZ → ambiguous) |
 
 Open: shared types package vs duplicating types in `web/` (default: duplicate, small surface).
 

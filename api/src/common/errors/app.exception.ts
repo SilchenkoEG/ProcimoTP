@@ -12,6 +12,15 @@ export const ErrorCode = {
   CourtNotFound: 'COURT_NOT_FOUND',
   CourtNameTaken: 'COURT_NAME_TAKEN',
   CourtHasUpcomingBookings: 'COURT_HAS_UPCOMING_BOOKINGS',
+  CourtInactive: 'COURT_INACTIVE',
+  // bookings
+  BookingNotFound: 'BOOKING_NOT_FOUND',
+  SlotTaken: 'SLOT_TAKEN',
+  BookingInPast: 'BOOKING_IN_PAST',
+  InvalidStart: 'INVALID_START',
+  OutsideOpeningHours: 'OUTSIDE_OPENING_HOURS',
+  BookingAlreadyCancelled: 'BOOKING_ALREADY_CANCELLED',
+  CancellationWindowClosed: 'CANCELLATION_WINDOW_CLOSED',
 } as const;
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
