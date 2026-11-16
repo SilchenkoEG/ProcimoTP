@@ -23,3 +23,14 @@ export function addDays(date: string, days: number): string {
 export function facilityDateTime(date: string, time: string): Date {
   return dayjs.tz(`${date} ${time}`, FACILITY_TIMEZONE).toDate();
 }
+
+/** An instant as facility-local calendar date and wall-clock time ("2030-01-10", "08:00"). */
+export function toFacilityLocal(instant: Date): { date: string; time: string } {
+  const local = dayjs(instant).tz(FACILITY_TIMEZONE);
+  return { date: local.format('YYYY-MM-DD'), time: local.format('HH:mm') };
+}
+
+/** True for a real calendar date in strict YYYY-MM-DD form (rejects "2030-02-30"). */
+export function isValidDate(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && dayjs(date).format('YYYY-MM-DD') === date;
+}
