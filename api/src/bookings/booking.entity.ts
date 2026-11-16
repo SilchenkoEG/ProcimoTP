@@ -19,8 +19,9 @@ export enum CancelledBy {
   Admin = 'admin',
 }
 
-// The no-overlap rule is NOT expressible in TypeORM decorators: it is an
-// exclusion constraint created in the InitialSchema migration (bookings_no_overlap).
+// The no-overlap rule is the `bookings_no_overlap` exclusion constraint, defined in the
+// InitialSchema migration. TypeORM's @Exclusion would only repeat the same raw SQL here,
+// and with migrations (synchronize: false) the migration is the schema's single source.
 @Entity({ name: 'bookings' })
 export class Booking {
   @PrimaryGeneratedColumn('uuid')

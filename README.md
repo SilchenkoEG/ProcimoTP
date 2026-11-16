@@ -44,7 +44,7 @@ Needs Node 24 and the Postgres container running (`docker compose up db`).
 cd api
 npm ci
 npm test            # 24 unit tests: booking rules, slots, DST
-npm run test:e2e    # 37 integration tests against a real Postgres (creates `courtly_test`)
+npm run test:e2e    # 41 integration tests against a real Postgres (creates `courtly_test`)
 ```
 
 The integration tests cover the three required cases (double booking including concurrent requests, the cancellation window, opening hours) plus sign-up and login, roles, validation and the admin flows.

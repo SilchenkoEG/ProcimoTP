@@ -115,6 +115,14 @@ describe('Bookings (integration, real Postgres)', () => {
       });
     });
 
+    it('rejects a duration other than 1 or 2 hours', async () => {
+      const res = await book(f.tokens.bob, f.padel.id, '2030-01-11T10:00:00Z', 3).expect(400);
+      expect(res.body.error).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        details: { hours: ['hours must be 1 or 2'] },
+      });
+    });
+
     it('rejects a start that is not on the hour', async () => {
       const res = await book(f.tokens.bob, f.padel.id, '2030-01-11T10:30:00Z').expect(422);
       expect(res.body.error.code).toBe('INVALID_START');

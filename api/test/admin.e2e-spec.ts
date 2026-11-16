@@ -50,6 +50,37 @@ describe('Roles, court management and admin day view (integration)', () => {
     });
   });
 
+  describe('creating a court', () => {
+    const create = (body: object) =>
+      ctx.http.post('/api/admin/courts').set(auth(f.tokens.admin)).send(body);
+    const valid = {
+      name: 'Squash 1',
+      sport: 'squash',
+      priceCents: 1200,
+      opensAt: '10:00',
+      closesAt: '22:00',
+    };
+
+    it('creates an active court that users can then see', async () => {
+      const res = await create({ ...valid, name: '  Squash 1  ' }).expect(201);
+      expect(res.body).toMatchObject({ ...valid, isActive: true });
+      await ctx.http.get(`/api/courts/${res.body.id}`).set(auth(f.tokens.bob)).expect(200);
+    });
+
+    it('refuses a name that is already taken (409)', async () => {
+      const res = await create({ ...valid, name: 'Padel 1' }).expect(409);
+      expect(res.body.error.code).toBe('COURT_NAME_TAKEN');
+    });
+
+    it('refuses a closing time that is not after opening (400)', async () => {
+      const res = await create({ ...valid, opensAt: '22:00', closesAt: '10:00' }).expect(400);
+      expect(res.body.error).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        details: { closesAt: ['closesAt must be later than opensAt'] },
+      });
+    });
+  });
+
   describe('deactivating a court with upcoming bookings', () => {
     it('refuses with 409 first, then on confirmation deactivates and cancels them', async () => {
       const past = await book(f.tokens.bob, f.padel.id, '2030-01-10T10:00:00Z');
