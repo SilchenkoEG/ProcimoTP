@@ -15,6 +15,11 @@ export const formatPrice = (cents: number) => eur.format(cents / 100);
 const local = (iso: string) => dayjs(iso).tz(FACILITY_TIMEZONE);
 export const formatTime = (iso: string) => local(iso).format('HH:mm');
 export const formatDay = (iso: string) => local(iso).format('ddd D MMM YYYY');
+/** Pieces for a calendar-style date tile: "Nov", "17", "Tue". */
+export const formatDateParts = (iso: string) => {
+  const d = local(iso);
+  return { month: d.format('MMM'), day: d.format('D'), weekday: d.format('ddd') };
+};
 export const formatRange = (startIso: string, endIso: string) =>
   `${formatDay(startIso)}, ${formatTime(startIso)}–${formatTime(endIso)}`;
 

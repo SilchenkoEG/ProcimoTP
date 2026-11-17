@@ -17,7 +17,7 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title="Courtly"
+      title="Welcome back"
       subtitle="Sign in to book a court."
       footer={
         <>

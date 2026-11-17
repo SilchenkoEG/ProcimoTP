@@ -1,9 +1,12 @@
 import AddIcon from '@mui/icons-material/Add';
+import BlockIcon from '@mui/icons-material/Block';
+import EditIcon from '@mui/icons-material/Edit';
+import RestoreIcon from '@mui/icons-material/Restore';
 import {
   Alert,
   Button,
+  Card,
   Chip,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -17,7 +20,9 @@ import { useState } from 'react';
 import { errorCode, errorDetails, errorMessage } from '../../api/errors';
 import type { Court } from '../../api/types';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { PageHeader } from '../../components/PageHeader';
 import { QueryState } from '../../components/QueryState';
+import { SportAvatar } from '../../components/SportAvatar';
 import { formatPrice, SPORT_LABEL } from '../../lib/format';
 import {
   type CourtInput,
@@ -115,21 +120,22 @@ export function AdminCourtsPage() {
 
   return (
     <>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" component="h1">
-          Manage courts
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setFormError(null);
-            setFormCourt(null);
-          }}
-        >
-          New court
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Manage courts"
+        subtitle="Prices, opening hours and which courts can be booked."
+        action={
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setFormError(null);
+              setFormCourt(null);
+            }}
+          >
+            New court
+          </Button>
+        }
+      />
 
       {notice && (
         <Alert severity={notice.ok ? 'success' : 'error'} sx={{ mb: 2 }} onClose={() => setNotice(null)}>
@@ -138,8 +144,8 @@ export function AdminCourtsPage() {
       )}
 
       <QueryState isLoading={isLoading} error={error}>
-        <TableContainer component={Paper}>
-          <Table size="small" aria-label="Courts">
+        <TableContainer component={Card}>
+          <Table aria-label="Courts">
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
@@ -152,10 +158,17 @@ export function AdminCourtsPage() {
             </TableHead>
             <TableBody>
               {courts?.map((court) => (
-                <TableRow key={court.id} sx={{ opacity: court.isActive ? 1 : 0.6 }}>
-                  <TableCell>{court.name}</TableCell>
+                <TableRow key={court.id} sx={{ '& > td': { opacity: court.isActive ? 1 : 0.55 }, '& > td:last-of-type': { opacity: 1 } }}>
+                  <TableCell>
+                    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+                      <SportAvatar sport={court.sport} size={32} />
+                      <Typography sx={{ fontWeight: 600 }}>{court.name}</Typography>
+                    </Stack>
+                  </TableCell>
                   <TableCell>{SPORT_LABEL[court.sport]}</TableCell>
-                  <TableCell align="right">{formatPrice(court.priceCents)}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {formatPrice(court.priceCents)}
+                  </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     {court.opensAt}–{court.closesAt}
                   </TableCell>
@@ -169,6 +182,7 @@ export function AdminCourtsPage() {
                   <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                     <Button
                       size="small"
+                      startIcon={<EditIcon />}
                       onClick={() => {
                         setFormError(null);
                         setFormCourt(court);
@@ -179,6 +193,8 @@ export function AdminCourtsPage() {
                     <Button
                       size="small"
                       color={court.isActive ? 'error' : 'primary'}
+                      startIcon={court.isActive ? <BlockIcon /> : <RestoreIcon />}
+                      sx={{ ml: 1 }}
                       disabled={updating.isLoading}
                       onClick={() => toggleActive(court)}
                     >

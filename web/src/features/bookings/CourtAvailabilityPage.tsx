@@ -1,8 +1,8 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
   Alert,
+  Box,
   Button,
-  Chip,
   Paper,
   Stack,
   ToggleButton,
@@ -15,6 +15,7 @@ import { errorCode, errorMessage } from '../../api/errors';
 import type { Booking } from '../../api/types';
 import { DateNavigator } from '../../components/DateNavigator';
 import { QueryState } from '../../components/QueryState';
+import { SportAvatar } from '../../components/SportAvatar';
 import { facilityToday, formatPrice, formatRange, SPORT_LABEL } from '../../lib/format';
 import { useGetCourtQuery } from '../courts/courtsApi';
 import { useCreateBookingMutation, useGetAvailabilityQuery } from './bookingsApi';
@@ -79,23 +80,39 @@ export function CourtAvailabilityPage() {
     }
   };
 
+  const back = (
+    <Button component={Link} to="/courts" startIcon={<ArrowBackIcon />} sx={{ mb: 2, ml: -1 }}>
+      All courts
+    </Button>
+  );
+
+  // Unknown or malformed court id: show that one error, not a second one from availability.
+  if (court.error) {
+    return (
+      <>
+        {back}
+        <Alert severity="error">{errorMessage(court.error)}</Alert>
+      </>
+    );
+  }
+
   return (
     <>
-      <Button component={Link} to="/courts" startIcon={<ArrowBackIcon />} sx={{ mb: 1 }}>
-        All courts
-      </Button>
+      {back}
 
-      <QueryState isLoading={court.isLoading} error={court.error}>
+      <QueryState isLoading={court.isLoading} error={undefined}>
         {court.data && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
-            <Typography variant="h5" component="h1">
-              {court.data.name}
-            </Typography>
-            <Chip label={SPORT_LABEL[court.data.sport]} size="small" />
-            <Typography color="text.secondary">
-              {formatPrice(court.data.priceCents)} / hour · open {court.data.opensAt}–
-              {court.data.closesAt}
-            </Typography>
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 3 }}>
+            <SportAvatar sport={court.data.sport} size={56} />
+            <Box>
+              <Typography variant="h4" component="h1">
+                {court.data.name}
+              </Typography>
+              <Typography color="text.secondary">
+                {SPORT_LABEL[court.data.sport]} · {formatPrice(court.data.priceCents)} / hour · open{' '}
+                {court.data.opensAt}–{court.data.closesAt}
+              </Typography>
+            </Box>
           </Stack>
         )}
       </QueryState>
@@ -124,7 +141,7 @@ export function CourtAvailabilityPage() {
 
       <QueryState isLoading={availability.isLoading} error={availability.error}>
         {slots.length === 0 ? (
-          <Typography>This court has no slots on this day.</Typography>
+          <Typography color="text.secondary">This court has no slots on this day.</Typography>
         ) : (
           <SlotGrid
             slots={slots}
@@ -137,29 +154,48 @@ export function CourtAvailabilityPage() {
 
       {selection && availability.data && (
         <Paper
-          elevation={3}
-          sx={{ position: 'sticky', bottom: 16, mt: 3, p: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}
+          elevation={0}
+          sx={{
+            position: 'sticky',
+            bottom: 16,
+            mt: 4,
+            p: 2,
+            display: 'flex',
+            gap: 2,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            border: 1,
+            borderColor: 'divider',
+            boxShadow: '0 12px 32px rgba(20, 33, 27, 0.14)',
+          }}
         >
           <ToggleButtonGroup
             exclusive
             size="small"
+            color="primary"
             value={effectiveHours}
             onChange={(_, value: 1 | 2 | null) => value && setHours(value)}
             aria-label="Duration"
           >
-            <ToggleButton value={1}>1 hour</ToggleButton>
-            <ToggleButton value={2} disabled={!twoHoursPossible}>
+            <ToggleButton value={1} sx={{ px: 2 }}>
+              1 hour
+            </ToggleButton>
+            <ToggleButton value={2} disabled={!twoHoursPossible} sx={{ px: 2 }}>
               2 hours
             </ToggleButton>
           </ToggleButtonGroup>
-          <Typography sx={{ flexGrow: 1 }}>
-            {formatRange(
-              selection.start.startsAt,
-              slots[selection.index + effectiveHours - 1].endsAt,
-            )}{' '}
-            · <strong>{formatPrice(availability.data.priceCents * effectiveHours)}</strong>
+          <Box sx={{ flexGrow: 1, minWidth: 200 }}>
+            <Typography sx={{ fontWeight: 600 }}>
+              {formatRange(selection.start.startsAt, slots[selection.index + effectiveHours - 1].endsAt)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {court.data?.name} · {effectiveHours} h
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: 22, fontWeight: 700 }}>
+            {formatPrice(availability.data.priceCents * effectiveHours)}
           </Typography>
-          <Button variant="contained" onClick={book} disabled={booking.isLoading}>
+          <Button variant="contained" size="large" onClick={book} disabled={booking.isLoading} sx={{ px: 4 }}>
             {booking.isLoading ? 'Booking…' : 'Book'}
           </Button>
         </Paper>
