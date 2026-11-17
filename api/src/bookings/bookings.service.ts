@@ -32,6 +32,8 @@ export class BookingsService {
    * against double booking is the `bookings_no_overlap` exclusion constraint: when two
    * requests race for the same slot, Postgres lets exactly one INSERT commit and the
    * other fails with 23P01, which we return as 409 SLOT_TAKEN.
+   * `bookings_no_back_to_back_same_user` stops one user chaining bookings on a court
+   * (409 BACK_TO_BACK_BOOKING), so nobody plays more than 2 hours in a row.
    */
   async create(
     user: AuthUser,
@@ -100,6 +102,13 @@ export class BookingsService {
           HttpStatus.CONFLICT,
           ErrorCode.SlotTaken,
           'This time slot has just been booked by someone else',
+        );
+      }
+      if (isPgError(error, PG_EXCLUSION_VIOLATION, 'bookings_no_back_to_back_same_user')) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          ErrorCode.BackToBackBooking,
+          'You already have a booking on this court right before or after this time. You can play at most 2 hours in a row',
         );
       }
       throw error;

@@ -18,6 +18,7 @@ export const ErrorCode = {
   // bookings
   BookingNotFound: 'BOOKING_NOT_FOUND',
   SlotTaken: 'SLOT_TAKEN',
+  BackToBackBooking: 'BACK_TO_BACK_BOOKING',
   BookingInPast: 'BOOKING_IN_PAST',
   InvalidStart: 'INVALID_START',
   OutsideOpeningHours: 'OUTSIDE_OPENING_HOURS',

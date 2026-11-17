@@ -94,6 +94,80 @@ describe('Bookings (integration, real Postgres)', () => {
     });
   });
 
+  describe('no back-to-back bookings by the same user on the same court', () => {
+    const expectBackToBack = (res: { body: { error: { code: string } } }) =>
+      expect(res.body.error.code).toBe('BACK_TO_BACK_BOOKING');
+
+    it('rejects a booking that starts when my own booking ends (17–19 + 19–21)', async () => {
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2).expect(201);
+      expectBackToBack(
+        await book(f.tokens.alice, f.padel.id, '2030-01-11T19:00:00Z', 2).expect(409),
+      );
+    });
+
+    it('rejects a booking that ends when my own booking starts', async () => {
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T19:00:00Z', 2).expect(201);
+      expectBackToBack(
+        await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2).expect(409),
+      );
+    });
+
+    it('rejects two 1 h bookings in a row too (book one 2 h booking instead)', async () => {
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z').expect(201);
+      expectBackToBack(await book(f.tokens.alice, f.padel.id, '2030-01-11T18:00:00Z').expect(409));
+    });
+
+    it('allows another user to book right after me', async () => {
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2).expect(201);
+      await book(f.tokens.bob, f.padel.id, '2030-01-11T19:00:00Z', 2).expect(201);
+    });
+
+    it('allows me to book again after a gap of at least an hour', async () => {
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2).expect(201);
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T20:00:00Z', 2).expect(201);
+    });
+
+    it('allows me to book a different court right after', async () => {
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2).expect(201);
+      await book(f.tokens.alice, f.tennis.id, '2030-01-11T19:00:00Z').expect(201);
+    });
+
+    it('allows it once the neighbouring booking is cancelled', async () => {
+      const first = await book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2).expect(201);
+      await ctx.http
+        .post(`/api/bookings/${first.body.id}/cancel`)
+        .set(auth(f.tokens.alice))
+        .expect(200);
+      await book(f.tokens.alice, f.padel.id, '2030-01-11T19:00:00Z', 2).expect(201);
+    });
+
+    it('lets only one of two simultaneous back-to-back requests succeed', async () => {
+      const responses = await Promise.all([
+        book(f.tokens.alice, f.padel.id, '2030-01-11T17:00:00Z', 2),
+        book(f.tokens.alice, f.padel.id, '2030-01-11T19:00:00Z', 2),
+      ]);
+      expect(responses.map((r) => r.status).toSorted((a, b) => a - b)).toEqual([201, 409]);
+      expectBackToBack(responses.find((r) => r.status === 409)!);
+    });
+
+    it('is enforced by the database itself, even when the service is bypassed', async () => {
+      const repo = ctx.dataSource.getRepository(Booking);
+      const row = (startsAt: string, endsAt: string) => ({
+        courtId: f.padel.id,
+        userId: f.alice.id,
+        startsAt: new Date(startsAt),
+        endsAt: new Date(endsAt),
+        priceCents: 2400,
+      });
+      await repo.insert(row('2030-01-11T17:00:00Z', '2030-01-11T18:00:00Z'));
+      await expect(
+        repo.insert(row('2030-01-11T18:00:00Z', '2030-01-11T19:00:00Z')),
+      ).rejects.toMatchObject({
+        driverError: { code: '23P01', constraint: 'bookings_no_back_to_back_same_user' },
+      });
+    });
+  });
+
   describe('opening hours', () => {
     it('allows a booking from opening time', async () => {
       await book(f.tokens.bob, f.tennis.id, '2030-01-11T09:00:00Z').expect(201);

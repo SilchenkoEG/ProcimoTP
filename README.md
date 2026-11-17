@@ -44,7 +44,7 @@ Needs Node 24 and the Postgres container running (`docker compose up db`).
 cd api
 npm ci
 npm test            # 24 unit tests: booking rules, slots, DST
-npm run test:e2e    # 41 integration tests against a real Postgres (creates `courtly_test`)
+npm run test:e2e    # 50 integration tests against a real Postgres (creates `courtly_test`)
 ```
 
 The integration tests cover the three required cases (double booking including concurrent requests, the cancellation window, opening hours) plus sign-up and login, roles, validation and the admin flows.
@@ -74,6 +74,16 @@ EXCLUDE USING gist (
 - Only confirmed bookings count, so a cancelled booking frees the slot.
 - Creating a booking reads the court with `FOR SHARE`; admin court edits take `FOR UPDATE`. A booking can't slip in while a court is being deactivated or its hours changed.
 - Tested by firing 10 parallel requests for the same slot: exactly one gets `201`, nine get `409`. A raw insert that bypasses the API is rejected too.
+- The same mechanism enforces the 2-hour limit. A second constraint stops a user from chaining bookings on one court (17:00–19:00 then 19:00–21:00), using `-|-`, which means the ranges touch with no gap:
+
+  ```sql
+  EXCLUDE USING gist (
+    user_id WITH =, court_id WITH =,
+    tstzrange(starts_at, ends_at, '[)') WITH -|-
+  ) WHERE (status = 'confirmed')
+  ```
+
+  The API answers `409 BACK_TO_BACK_BOOKING`. Other users can still book right after, and so can the same user after a gap or on another court.
 
 Rejected alternatives:
 
@@ -84,6 +94,7 @@ Rejected alternatives:
 ## Business rules and decisions
 
 - Bookings are 1 or 2 hours, start on the hour, must fall within opening hours and can't be in the past.
+- A user can't book the same court directly before or after their own booking, so nobody plays more than 2 hours in a row. Two 1-hour bookings in a row are rejected too; the user books one 2-hour slot instead. Booking two different courts at the same time isn't blocked: the brief doesn't forbid it, and that's a product decision.
 - A booking can be cancelled up to 2 hours before it starts (exactly 2 hours is still allowed).
 - Times use the facility's time zone, `Europe/Lisbon` (DST is tested), and are stored as `timestamptz`.
 - Each booking keeps the price at booking time, so later price changes don't rewrite past revenue.

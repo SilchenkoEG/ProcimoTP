@@ -19,9 +19,10 @@ export enum CancelledBy {
   Admin = 'admin',
 }
 
-// The no-overlap rule is the `bookings_no_overlap` exclusion constraint, defined in the
-// InitialSchema migration. TypeORM's @Exclusion would only repeat the same raw SQL here,
-// and with migrations (synchronize: false) the migration is the schema's single source.
+// Both booking rules are exclusion constraints defined in migrations: `bookings_no_overlap`
+// (InitialSchema) and `bookings_no_back_to_back_same_user` (NoBackToBackBookings).
+// TypeORM's @Exclusion would only repeat the same raw SQL here, and with migrations
+// (synchronize: false) the migration is the schema's single source.
 @Entity({ name: 'bookings' })
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
