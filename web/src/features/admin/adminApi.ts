@@ -1,4 +1,4 @@
-import { baseApi } from '../../api/baseApi';
+import { BOOKING_VIEWS, baseApi } from '../../api/baseApi';
 import type { AdminDayView, Court, Sport } from '../../api/types';
 
 export interface CourtInput {
@@ -40,7 +40,7 @@ export const adminApi = baseApi.injectEndpoints({
       }),
       // Hours/active changes can cancel bookings, so every booking view may be stale.
       invalidatesTags: (result) =>
-        result ? ['Courts', 'Availability', 'MyBookings', 'AdminDay'] : [],
+        result ? ['Courts', ...BOOKING_VIEWS] : [],
     }),
   }),
 });

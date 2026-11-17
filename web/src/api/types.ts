@@ -29,6 +29,13 @@ export interface Court {
   isActive: boolean;
 }
 
+export interface Slot {
+  time: string; // "08:00"
+  startsAt: string;
+  endsAt: string;
+  status: SlotStatus;
+}
+
 export interface Availability {
   courtId: string;
   date: string;
@@ -36,7 +43,7 @@ export interface Availability {
   opensAt: string;
   closesAt: string;
   priceCents: number;
-  slots: { time: string; startsAt: string; endsAt: string; status: SlotStatus }[];
+  slots: Slot[];
 }
 
 export interface Booking {

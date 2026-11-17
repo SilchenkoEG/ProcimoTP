@@ -1,6 +1,4 @@
-import type { Availability } from '../../api/types';
-
-type Slot = Availability['slots'][number];
+import type { Slot } from '../../api/types';
 
 /** A 2-hour booking needs the following slot to exist (before closing) and be free too. */
 export function canBookTwoHours(slots: Slot[], startIndex: number): boolean {

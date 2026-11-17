@@ -1,14 +1,8 @@
 import {
-  Alert,
   Button,
   Card,
   CardContent,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Stack,
   Tab,
   Tabs,
@@ -18,6 +12,7 @@ import {
 import { useState } from 'react';
 import { errorMessage } from '../../api/errors';
 import type { Booking } from '../../api/types';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { QueryState } from '../../components/QueryState';
 import { formatPrice, formatRange, SPORT_LABEL } from '../../lib/format';
 import { useCancelBookingMutation, useGetMyBookingsQuery } from './bookingsApi';
@@ -108,27 +103,18 @@ export function MyBookingsPage() {
         </Stack>
       </QueryState>
 
-      <Dialog open={toCancel !== null} onClose={() => setToCancel(null)}>
-        <DialogTitle>Cancel this booking?</DialogTitle>
-        <DialogContent>
-          {toCancel && (
-            <DialogContentText>
-              {toCancel.court.name}, {formatRange(toCancel.startsAt, toCancel.endsAt)}.
-            </DialogContentText>
-          )}
-          {cancel.error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {errorMessage(cancel.error)}
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setToCancel(null)}>Keep booking</Button>
-          <Button color="error" variant="contained" onClick={confirmCancel} disabled={cancel.isLoading}>
-            Cancel booking
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={toCancel !== null}
+        title="Cancel this booking?"
+        error={cancel.error ? errorMessage(cancel.error) : null}
+        cancelLabel="Keep booking"
+        confirmLabel="Cancel booking"
+        busy={cancel.isLoading}
+        onCancel={() => setToCancel(null)}
+        onConfirm={confirmCancel}
+      >
+        {toCancel && `${toCancel.court.name}, ${formatRange(toCancel.startsAt, toCancel.endsAt)}.`}
+      </ConfirmDialog>
     </>
   );
 }

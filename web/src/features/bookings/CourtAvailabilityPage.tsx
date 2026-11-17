@@ -1,14 +1,10 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
   Alert,
   Button,
   Chip,
-  IconButton,
   Paper,
   Stack,
-  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -17,15 +13,9 @@ import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { errorCode, errorMessage } from '../../api/errors';
 import type { Booking } from '../../api/types';
+import { DateNavigator } from '../../components/DateNavigator';
 import { QueryState } from '../../components/QueryState';
-import {
-  facilityToday,
-  formatDateLong,
-  formatPrice,
-  formatRange,
-  shiftDate,
-  SPORT_LABEL,
-} from '../../lib/format';
+import { facilityToday, formatPrice, formatRange, SPORT_LABEL } from '../../lib/format';
 import { useGetCourtQuery } from '../courts/courtsApi';
 import { useCreateBookingMutation, useGetAvailabilityQuery } from './bookingsApi';
 import { SlotGrid } from './SlotGrid';
@@ -37,7 +27,7 @@ export function CourtAvailabilityPage() {
   const today = facilityToday();
   const date = params.get('date') ?? today;
 
-  const court = useGetCourtQuery(courtId);
+  const court = useGetCourtQuery(courtId, { refetchOnFocus: true }); // hours can change
   const availability = useGetAvailabilityQuery(
     { courtId, date },
     // Not real-time, but re-checks every 30 s and when the tab regains focus.
@@ -51,7 +41,12 @@ export function CourtAvailabilityPage() {
 
   const slots = availability.data?.slots ?? [];
   const startIndex = slots.findIndex((s) => s.startsAt === selectedStart);
-  const twoHoursPossible = startIndex !== -1 && canBookTwoHours(slots, startIndex);
+  // A refresh can drop the selected slot (an admin changed the hours or closed the court),
+  // or take the hour after it. The selection then shrinks or disappears instead of
+  // pointing at a slot that isn't there.
+  const selection = startIndex === -1 ? null : { start: slots[startIndex], index: startIndex };
+  const twoHoursPossible = selection !== null && canBookTwoHours(slots, selection.index);
+  const effectiveHours = twoHoursPossible ? hours : 1;
 
   const changeDate = (next: string) => {
     setParams({ date: next < today ? today : next });
@@ -68,8 +63,12 @@ export function CourtAvailabilityPage() {
   };
 
   const book = async () => {
-    if (!selectedStart) return;
-    const result = await createBooking({ courtId, startsAt: selectedStart, hours });
+    if (!selection) return;
+    const result = await createBooking({
+      courtId,
+      startsAt: selection.start.startsAt,
+      hours: effectiveHours,
+    });
     if (result.data) {
       setBooked(result.data);
       setSelectedStart(null);
@@ -101,29 +100,7 @@ export function CourtAvailabilityPage() {
         )}
       </QueryState>
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
-        <IconButton
-          aria-label="Previous day"
-          onClick={() => changeDate(shiftDate(date, -1))}
-          disabled={date <= today}
-        >
-          <ChevronLeftIcon />
-        </IconButton>
-        <TextField
-          type="date"
-          size="small"
-          label="Date"
-          value={date}
-          onChange={(e) => e.target.value && changeDate(e.target.value)}
-          slotProps={{ htmlInput: { min: today }, inputLabel: { shrink: true } }}
-        />
-        <IconButton aria-label="Next day" onClick={() => changeDate(shiftDate(date, 1))}>
-          <ChevronRightIcon />
-        </IconButton>
-        <Typography color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-          {formatDateLong(date)}
-        </Typography>
-      </Stack>
+      <DateNavigator date={date} onChange={changeDate} min={today} />
 
       {booked && (
         <Alert
@@ -149,11 +126,16 @@ export function CourtAvailabilityPage() {
         {slots.length === 0 ? (
           <Typography>This court has no slots on this day.</Typography>
         ) : (
-          <SlotGrid slots={slots} selectedStart={selectedStart} hours={hours} onSelect={select} />
+          <SlotGrid
+            slots={slots}
+            selectedStart={selection?.start.startsAt ?? null}
+            hours={effectiveHours}
+            onSelect={select}
+          />
         )}
       </QueryState>
 
-      {selectedStart && availability.data && (
+      {selection && availability.data && (
         <Paper
           elevation={3}
           sx={{ position: 'sticky', bottom: 16, mt: 3, p: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}
@@ -161,7 +143,7 @@ export function CourtAvailabilityPage() {
           <ToggleButtonGroup
             exclusive
             size="small"
-            value={hours}
+            value={effectiveHours}
             onChange={(_, value: 1 | 2 | null) => value && setHours(value)}
             aria-label="Duration"
           >
@@ -171,8 +153,11 @@ export function CourtAvailabilityPage() {
             </ToggleButton>
           </ToggleButtonGroup>
           <Typography sx={{ flexGrow: 1 }}>
-            {formatRange(selectedStart, slots[startIndex + hours - 1].endsAt)} ·{' '}
-            <strong>{formatPrice(availability.data.priceCents * hours)}</strong>
+            {formatRange(
+              selection.start.startsAt,
+              slots[selection.index + effectiveHours - 1].endsAt,
+            )}{' '}
+            · <strong>{formatPrice(availability.data.priceCents * effectiveHours)}</strong>
           </Typography>
           <Button variant="contained" onClick={book} disabled={booking.isLoading}>
             {booking.isLoading ? 'Booking…' : 'Book'}

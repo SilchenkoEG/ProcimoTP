@@ -1,8 +1,6 @@
 import { Box, Button } from '@mui/material';
-import type { Availability } from '../../api/types';
+import type { Slot } from '../../api/types';
 import { isSlotSelected } from './slotSelection';
-
-type Slot = Availability['slots'][number];
 
 const LABEL: Record<Slot['status'], string> = {
   available: 'Free',

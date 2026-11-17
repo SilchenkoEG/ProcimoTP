@@ -1,4 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
 import { useDispatch, useSelector } from 'react-redux';
 import { baseApi } from '../api/baseApi';
 import { authReducer, signedOut } from '../features/auth/authSlice';
@@ -16,6 +17,9 @@ export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefault) => getDefault().concat(baseApi.middleware),
 });
+
+// Enables `refetchOnFocus` / `refetchOnReconnect`: without it those options do nothing.
+setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

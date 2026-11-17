@@ -3,11 +3,6 @@ import {
   Alert,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Paper,
   Stack,
   Table,
@@ -21,6 +16,7 @@ import {
 import { useState } from 'react';
 import { errorCode, errorDetails, errorMessage } from '../../api/errors';
 import type { Court } from '../../api/types';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { QueryState } from '../../components/QueryState';
 import { formatPrice, SPORT_LABEL } from '../../lib/format';
 import {
@@ -209,28 +205,25 @@ export function AdminCourtsPage() {
         />
       )}
 
-      <Dialog open={pending !== null} onClose={() => setPending(null)}>
-        <DialogTitle>
-          {pending?.changes.isActive === false
+      <ConfirmDialog
+        open={pending !== null}
+        title={
+          pending?.changes.isActive === false
             ? `Deactivate ${pending.court.name}?`
-            : `Change ${pending?.court.name}?`}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {pending?.court.name} has {pending?.affectedBookings} upcoming booking(s) that{' '}
-            {pending?.changes.isActive === false
-              ? 'would be on an inactive court'
-              : 'fall outside the new opening hours'}
-            . Applying this change will cancel them. Past bookings are kept.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPending(null)}>Keep as is</Button>
-          <Button color="error" variant="contained" onClick={confirmPending} disabled={updating.isLoading}>
-            Apply and cancel bookings
-          </Button>
-        </DialogActions>
-      </Dialog>
+            : `Change ${pending?.court.name}?`
+        }
+        cancelLabel="Keep as is"
+        confirmLabel="Apply and cancel bookings"
+        busy={updating.isLoading}
+        onCancel={() => setPending(null)}
+        onConfirm={confirmPending}
+      >
+        {pending?.court.name} has {pending?.affectedBookings} upcoming booking(s) that{' '}
+        {pending?.changes.isActive === false
+          ? 'would be on an inactive court'
+          : 'fall outside the new opening hours'}
+        . Applying this change will cancel them. Past bookings are kept.
+      </ConfirmDialog>
     </>
   );
 }

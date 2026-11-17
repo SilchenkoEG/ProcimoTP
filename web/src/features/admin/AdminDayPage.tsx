@@ -1,32 +1,21 @@
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
   Card,
   CardContent,
   Chip,
   Grid,
-  IconButton,
   Paper,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useSearchParams } from 'react-router';
+import { DateNavigator } from '../../components/DateNavigator';
 import { QueryState } from '../../components/QueryState';
-import {
-  facilityToday,
-  formatDateLong,
-  formatPrice,
-  formatTime,
-  shiftDate,
-  SPORT_LABEL,
-} from '../../lib/format';
+import { facilityToday, formatPrice, formatTime, SPORT_LABEL } from '../../lib/format';
 import { useGetDayViewQuery } from './adminApi';
 
 function Stat({ label, value }: { label: string; value: string | number }) {
@@ -55,25 +44,7 @@ export function AdminDayPage() {
         Bookings by day
       </Typography>
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 3 }}>
-        <IconButton aria-label="Previous day" onClick={() => setParams({ date: shiftDate(date, -1) })}>
-          <ChevronLeftIcon />
-        </IconButton>
-        <TextField
-          type="date"
-          size="small"
-          label="Date"
-          value={date}
-          onChange={(e) => e.target.value && setParams({ date: e.target.value })}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <IconButton aria-label="Next day" onClick={() => setParams({ date: shiftDate(date, 1) })}>
-          <ChevronRightIcon />
-        </IconButton>
-        <Typography color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-          {formatDateLong(date)}
-        </Typography>
-      </Stack>
+      <DateNavigator date={date} onChange={(next) => setParams({ date: next })} />
 
       <QueryState isLoading={isLoading} error={error}>
         {data && (

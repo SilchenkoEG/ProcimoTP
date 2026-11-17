@@ -38,6 +38,12 @@ const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> =
 };
 
 /**
+ * Every view derived from bookings. Anything that can create or cancel bookings
+ * invalidates all of them, so no open screen shows stale slots, lists or revenue.
+ */
+export const BOOKING_VIEWS = ['Availability', 'MyBookings', 'AdminDay'] as const;
+
+/**
  * One API slice; features add endpoints with `injectEndpoints`.
  * Tags drive refetching: e.g. creating a booking invalidates Availability and MyBookings,
  * so open screens refresh on their own.
@@ -45,6 +51,6 @@ const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> =
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery,
-  tagTypes: ['Courts', 'Availability', 'MyBookings', 'AdminDay'],
+  tagTypes: ['Courts', ...BOOKING_VIEWS],
   endpoints: () => ({}),
 });
